@@ -27,8 +27,11 @@ gdp_per_capita = pd.read_csv(os.path.join(dataset, "gdp_per_capita.csv"), thousa
                              encoding='latin1', na_values="n/a")
 
 country_stats = prepare_country_stats(oecd_bli, gdp_per_capita)
-X = np.c_[country_stats["GDP per capita"]]
-Y = np.c_[country_stats["Life satisfaction"]]
+# X = np.c_[country_stats["GDP per capita"]]
+# Y = np.c_[country_stats["Life satisfaction"]]
+
+X = country_stats["GDP per capita"].to_numpy().reshape(-1,1)
+Y = country_stats["Life satisfaction"].to_numpy().reshape(-1,1)
 
 country_stats.plot(kind='scatter', x="GDP per capita", y="Life satisfaction")
 plt.show()
