@@ -149,4 +149,125 @@ full_pipeline = ColumnTransformer([
 
 housing_prepared = full_pipeline.fit_transform(housing_clean)
 
+'''Training Models'''
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestRegressor
+import joblib
+
+# lin_reg = LinearRegression()
+# lin_reg.fit(housing_prepared, housing_labels)
+#
+# housing_predictions = lin_reg.predict(housing_prepared)
+# lin_mse = mean_squared_error(housing_labels, housing_predictions)
+# lin_mse = np.sqrt(lin_mse)
+# print(lin_mse)
+#
+# joblib.dump(lin_reg, "linear_reg.pkl")
+#
+# tree_reg = DecisionTreeRegressor()
+# tree_reg.fit(housing_prepared, housing_labels)
+#
+# housing_predictions = tree_reg.predict(housing_prepared)
+# tree_mse = mean_squared_error(housing_labels, housing_predictions)
+# tree_mse = np.sqrt(tree_mse)
+# print(tree_mse)
+#
+# joblib.dump(tree_reg, "tree_reg.pkl")
+#
+# tree_reg = joblib.load("tree_reg.pkl")
+#
+# scores = cross_val_score(tree_reg, housing_prepared, housing_labels,
+#                          scoring="neg_mean_squared_error", cv=10)
+# tree_rms_scores = np.sqrt(-scores)
+# print(tree_rms_scores)
+# print(tree_rms_scores.mean())
+# print(tree_rms_scores.std())
+#
+# lin_reg = joblib.load("linear_reg.pkl")
+#
+# scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
+#                          scoring="neg_mean_squared_error", cv=10)
+# tree_rms_scores = np.sqrt(-scores)
+# print(tree_rms_scores)
+# print(tree_rms_scores.mean())
+# print(tree_rms_scores.std())
+#
+# forest_reg = RandomForestRegressor()
+# forest_reg.fit(housing_prepared, housing_labels)
+#
+# scores = cross_val_score(forest_reg, housing_prepared, housing_labels,
+#                          scoring="neg_mean_squared_error", cv=10)
+# tree_rms_scores = np.sqrt(-scores)
+# print(tree_rms_scores)
+# print(tree_rms_scores.mean())
+# print(tree_rms_scores.std())
+#
+# joblib.dump(forest_reg, "forest_reg.pkl")
+
+
+'''Fine Tune Model'''
+
+from sklearn.model_selection import GridSearchCV
+
+# param_grid = [
+#     {'n_estimators': [3, 10, 30], 'max_features': [2, 4, 6, 8]},
+#     {'bootstrap': [False], 'n_estimators': [3, 10], 'max_features': [2, 3, 4]}
+# ]
+#
+# forest_reg = RandomForestRegressor()
+#
+# grid_search = GridSearchCV(forest_reg, param_grid, cv=5, scoring="neg_mean_squared_error",
+#                            return_train_score=True)
+#
+# grid_search.fit(housing_prepared, housing_labels)
+#
+# print(grid_search.best_params_)
+#
+# print(grid_search.best_estimator_)
+#
+# cvres = grid_search.cv_results_
+# for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+#     print(np.sqrt(-mean_score), params)
+#
+# feature_importances = grid_search.best_estimator_.feature_importances_
+# print(feature_importances)
+#
+# extra_attribs = ["rooms_per_hhold", "pop_per_hhold", "bedrooms_per_room"]
+# cat_encoder = full_pipeline.named_transformers_["cat"]
+# cat_one_hot_attribs = list(cat_encoder.categories_[0])
+# attributes = num_attribs + extra_attribs + cat_one_hot_attribs
+# print(sorted(zip(feature_importances, attributes), reverse=True))
+#
+# final_model = grid_search.best_estimator_
+#
+# joblib.dump(final_model, "final_model.pkl")
+
+
+'''Test Model'''
+
+final_model = joblib.load("final_model.pkl")
+X_test = stratified_test_set.drop("median_house_value",axis=1)
+y_test = stratified_test_set["median_house_value"].copy()
+
+X_test_prepared = full_pipeline.transform(X_test)
+
+final_predictions = final_model.predict(X_test_prepared)
+final_mse = mean_squared_error(y_test,final_predictions)
+final_rmse = np.sqrt(final_mse)
+
+print(final_rmse)
+
+from scipy import stats
+
+confidence = 0.95
+squared_erros = (final_predictions-y_test) ** 2
+confidence_95 = np.sqrt(stats.t.interval(confidence,len(squared_erros)-1,
+                                         loc=squared_erros.mean(),
+                                         scale=stats.sem(squared_erros)))
+print(confidence_95)
+
 print("Done")
